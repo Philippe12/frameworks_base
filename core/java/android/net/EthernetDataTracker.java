@@ -17,6 +17,10 @@
 package android.net;
 
 import android.content.Context;
+import android.net.LinkAddress;
+import android.net.RouteInfo;
+import android.net.ethernet.EthernetDevInfo;
+import android.net.ethernet.EthernetManager;
 import android.net.NetworkInfo.DetailedState;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,6 +30,10 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.util.Log;
+import android.content.Intent;
+
+import java.net.InetAddress;
+import java.net.Inet4Address;
 
 import com.android.server.net.BaseNetworkObserver;
 
@@ -39,6 +47,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @hide
  */
 public class EthernetDataTracker extends BaseNetworkStateTracker {
+    public static final int ETHERNET_CONNECTED = 1;
+    public static final int ETHERNET_DISCONNECTED = 2;
     private static final String NETWORKTYPE = "ETHERNET";
     private static final String TAG = "Ethernet";
 
@@ -47,9 +57,11 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
     private AtomicInteger mDefaultGatewayAddr = new AtomicInteger(0);
     private AtomicBoolean mDefaultRouteSet = new AtomicBoolean(false);
 
+    private static boolean mEnabled = false;
     private static boolean mLinkUp;
     private InterfaceObserver mInterfaceObserver;
     private String mHwAddr;
+    private EthernetDevInfo mDevInfo;
 
     /* For sending events to connectivity service handler */
     private Handler mCsHandler;
@@ -78,6 +90,8 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
             if (mIface.equals(iface)) {
                 Log.d(TAG, "Interface " + iface + " link " + (up ? "up" : "down"));
                 mLinkUp = up;
+                if (mEnabled == false)
+                    return;
                 mTracker.mNetworkInfo.setIsAvailable(up);
 
                 // use DHCP
@@ -85,6 +99,7 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
                     mTracker.reconnect();
                 } else {
                     mTracker.disconnect();
+                    mTracker.sendStateBroadcast(EthernetManager.EVENT_DISCONNECTED);
                 }
             }
         }
@@ -104,6 +119,22 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
         mNetworkInfo = new NetworkInfo(ConnectivityManager.TYPE_ETHERNET, 0, NETWORKTYPE, "");
         mLinkProperties = new LinkProperties();
         mLinkCapabilities = new LinkCapabilities();
+        mDevInfo = null;
+    }
+
+    //send broadcast to update ethernet icon
+    private void sendBroadcast() {
+    }
+
+    private void sendStateBroadcast(int event) {
+        Intent intent = new Intent(EthernetManager.NETWORK_STATE_CHANGED_ACTION);
+        intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT
+									| Intent.FLAG_RECEIVER_REPLACE_PENDING);
+        intent.putExtra(EthernetManager.EXTRA_NETWORK_INFO, mNetworkInfo);
+        intent.putExtra(EthernetManager.EXTRA_LINK_PROPERTIES,
+							new LinkProperties (mLinkProperties));
+		intent.putExtra(EthernetManager.EXTRA_ETHERNET_STATE, event);
+        mContext.sendStickyBroadcast(intent);
     }
 
     private void interfaceAdded(String iface) {
@@ -131,7 +162,11 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
     }
 
     public void disconnect() {
-
+	    if (mEnabled == false && !mLinkUp)
+	        return;
+		
+		Log.d(TAG, "disconnect tracker");
+	
         NetworkUtils.stopDhcp(mIface);
 
         mLinkProperties.clear();
@@ -151,6 +186,7 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
         } catch (Exception e) {
             Log.e(TAG, "Failed to clear addresses or disable ipv6" + e);
         }
+        sendStateBroadcast(EthernetManager.EVENT_DISCONNECTED);
     }
 
     private void interfaceRemoved(String iface) {
@@ -168,6 +204,7 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
                 DhcpResults dhcpResults = new DhcpResults();
                 if (!NetworkUtils.runDhcp(mIface, dhcpResults)) {
                     Log.e(TAG, "DHCP request error:" + NetworkUtils.getDhcpError());
+                    sendStateBroadcast(EthernetManager.EVENT_CONFIGURATION_FAILED);
                     return;
                 }
                 mLinkProperties = dhcpResults.linkProperties;
@@ -176,10 +213,82 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
                 mNetworkInfo.setDetailedState(DetailedState.CONNECTED, null, mHwAddr);
                 Message msg = mCsHandler.obtainMessage(EVENT_STATE_CHANGED, mNetworkInfo);
                 msg.sendToTarget();
+                sendStateBroadcast(EthernetManager.EVENT_CONFIGURATION_SUCCEEDED);
             }
         });
-        dhcpThread.start();
+	    try {
+            mNMService.clearInterfaceAddresses(mIface);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to clear addresses" + e);
+        }
+	    dhcpThread.start();
     }
+
+     /**
+     * Set up the manual configuration 
+     * - IP address
+     * - Netmask
+     * - Default route
+     * - Dns Servers (EthernetDevInfo needs update to provide second serveur)
+     */
+    private void setManualConf() {
+        try {
+	    	// Cleaning up
+	    	mNMService.clearInterfaceAddresses(mIface);
+	    	mLinkProperties.clear();
+	    	// Ip Address and mask
+	    	InterfaceConfiguration config = mNMService.getInterfaceConfig(mIface);
+	    	InetAddress addr = NetworkUtils.numericToInetAddress(mDevInfo.getIpAddress());
+	    	int prefix_length = NetworkUtils.netmaskIntToPrefixLength(NetworkUtils.inetAddressToInt
+	        				((Inet4Address)NetworkUtils.numericToInetAddress(mDevInfo.getNetMask())));
+	    	config.setLinkAddress(new LinkAddress(addr, prefix_length)); 
+	    	Log.d(TAG, "setManualConf : set config");
+	    	mNMService.setInterfaceConfig(mIface, config);
+		} catch (Exception e) {
+            Log.e(TAG, "Failed to set manual configuration" + e);
+            sendStateBroadcast(EthernetManager.EVENT_CONFIGURATION_FAILED);
+	    	return;
+        }
+	
+		// Set LinkProperties.
+		mLinkProperties.setInterfaceName(mIface);
+		mLinkProperties.addLinkAddress(new LinkAddress(NetworkUtils.numericToInetAddress(mDevInfo.getIpAddress()), 
+					    NetworkUtils.netmaskIntToPrefixLength(NetworkUtils.inetAddressToInt
+					    ((Inet4Address)NetworkUtils.numericToInetAddress(mDevInfo.getNetMask())))));
+		String dns[] = mDevInfo.getDnsAddr();
+		mLinkProperties.addDns(NetworkUtils.numericToInetAddress(dns[0]));
+		mLinkProperties.addDns(NetworkUtils.numericToInetAddress(dns[1]));
+		mLinkProperties.addRoute(new RouteInfo(null, NetworkUtils.numericToInetAddress(mDevInfo.getGateWay())));
+
+		mNetworkInfo.setDetailedState(DetailedState.CONNECTED, null, mHwAddr);
+		Message msg = mCsHandler.obtainMessage(EVENT_STATE_CHANGED, mNetworkInfo);
+		msg.sendToTarget();
+		sendStateBroadcast(EthernetManager.EVENT_CONFIGURATION_SUCCEEDED);
+    }
+
+    /**
+     * Set up the IP configuration, either start dhcp or
+     * apply static configuration.
+     */
+    private void setUpIPConfig() {
+		if (mDevInfo == null) {
+		    Log.e(TAG, "setUpIPConfig Error : No mDevInfo");
+		    return; 
+		}
+		if (mDevInfo.getConnectMode() == EthernetDevInfo.ETHERNET_CONN_MODE_DHCP) {
+	    	Log.d(TAG, "setUpIPConfig : Using DHCP");
+	    	runDhcp();
+		}
+		else if (mDevInfo.getConnectMode() == EthernetDevInfo.ETHERNET_CONN_MODE_MANUAL) {
+	    	Log.d(TAG, "setUpIPConfig : Using manual configuration");
+	    	setManualConf();
+		}
+		else {
+	    	Log.e(TAG, "setUpIPConfig Error : Wrong connection mode : " + mDevInfo.getConnectMode());
+	    	return;
+		}
+    }
+
 
     public static synchronized EthernetDataTracker getInstance() {
         if (sInstance == null) sInstance = new EthernetDataTracker();
@@ -195,6 +304,7 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
     }
 
     public boolean isTeardownRequested() {
+    	//sendStateBroadcast(EthernetManager.EVENT_DISCONNECTED);
         return mTeardownRequested.get();
     }
 
@@ -253,6 +363,8 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
      * TODO: do away with return value after making MobileDataStateTracker async
      */
     public boolean teardown() {
+	    if (mEnabled == false)
+	        return false;
         mTeardownRequested.set(true);
         NetworkUtils.stopDhcp(mIface);
         return true;
@@ -262,9 +374,9 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
      * Re-enable connectivity to a network after a {@link #teardown()}.
      */
     public boolean reconnect() {
-        if (mLinkUp) {
+		if (mEnabled == true && mLinkUp) {
             mTeardownRequested.set(false);
-            runDhcp();
+            setUpIPConfig();
         }
         return mLinkUp;
     }
@@ -407,6 +519,22 @@ public class EthernetDataTracker extends BaseNetworkStateTracker {
 
     public void setDependencyMet(boolean met) {
         // not supported on this network
+    }
+
+    /**
+     * Update the network configuration.
+     * It does not aftect the ongoing connection.
+     */
+    public void setDevConfiguration(EthernetDevInfo info) {
+	mDevInfo = info;
+    }
+
+    public void setEnabled(boolean enabled) {
+	mEnabled = enabled;
+    }
+
+    public boolean isEnabled() {
+	return mEnabled;
     }
 
     @Override

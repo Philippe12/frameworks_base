@@ -40,6 +40,8 @@ public class SignalClusterView
 
     private boolean mWifiVisible = false;
     private int mWifiStrengthId = 0;
+    private boolean mEthernetVisible = false;
+    private int mEthernetIconId = 0;
     private boolean mMobileVisible = false;
     private int mMobileStrengthId = 0, mMobileTypeId = 0;
     private boolean mIsAirplaneMode = false;
@@ -47,7 +49,7 @@ public class SignalClusterView
     private String mWifiDescription, mMobileDescription, mMobileTypeDescription;
 
     ViewGroup mWifiGroup, mMobileGroup;
-    ImageView mWifi, mMobile, mMobileType, mAirplane;
+    ImageView mWifi, mMobile, mMobileType, mAirplane, mEthernet;
     View mSpacer;
 
     public SignalClusterView(Context context) {
@@ -73,6 +75,7 @@ public class SignalClusterView
 
         mWifiGroup      = (ViewGroup) findViewById(R.id.wifi_combo);
         mWifi           = (ImageView) findViewById(R.id.wifi_signal);
+        mEthernet       = (ImageView) findViewById(R.id.ethernet_state);
         mMobileGroup    = (ViewGroup) findViewById(R.id.mobile_combo);
         mMobile         = (ImageView) findViewById(R.id.mobile_signal);
         mMobileType     = (ImageView) findViewById(R.id.mobile_type);
@@ -91,6 +94,7 @@ public class SignalClusterView
         mMobileType     = null;
         mSpacer         = null;
         mAirplane       = null;
+        mEthernet       = null;
 
         super.onDetachedFromWindow();
     }
@@ -112,6 +116,14 @@ public class SignalClusterView
         mMobileTypeId = typeIcon;
         mMobileDescription = contentDescription;
         mMobileTypeDescription = typeContentDescription;
+
+        apply();
+    }
+
+    @Override
+    public void setEthernetIndicators(boolean visible, int activityIcon) {
+        mEthernetVisible = visible;
+        mEthernetIconId = activityIcon;
 
         apply();
     }
@@ -176,6 +188,19 @@ public class SignalClusterView
                     (mWifiVisible ? "VISIBLE" : "GONE"),
                     mWifiStrengthId));
 
+        if (mEthernetVisible) {
+            if(DEBUG){
+                Log.d(TAG,"ethernet icon visible");
+            }
+            mEthernet.setVisibility(View.VISIBLE);
+            mEthernet.setImageResource(mEthernetIconId);
+        } else {
+            if(DEBUG){
+                Log.d(TAG,"ethernet icon not visible");
+            }
+            mEthernet.setVisibility(View.GONE);
+        }
+ 
         if (mMobileVisible && !mIsAirplaneMode) {
             mMobile.setImageResource(mMobileStrengthId);
             mMobileType.setImageResource(mMobileTypeId);

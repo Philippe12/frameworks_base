@@ -552,7 +552,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                             n.type);
                     continue;
                 }
-                if (mRadioAttributes[n.radio] == null) {
+                if ((mRadioAttributes[n.radio] == null) && (n.type != ConnectivityManager.TYPE_ETHERNET)) {
                     loge("Error in networkAttributes - ignoring attempt to use undefined " +
                             "radio " + n.radio + " in network type " + n.type);
                     continue;

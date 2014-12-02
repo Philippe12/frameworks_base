@@ -54,6 +54,7 @@ import com.android.server.am.BatteryStatsService;
 import com.android.server.content.ContentService;
 import com.android.server.display.DisplayManagerService;
 import com.android.server.dreams.DreamManagerService;
+import com.android.server.EthernetService;
 import com.android.server.input.InputManagerService;
 import com.android.server.media.MediaRouterService;
 import com.android.server.net.NetworkPolicyManagerService;
@@ -140,6 +141,7 @@ class ServerThread {
         ConnectivityService connectivity = null;
         WifiP2pService wifiP2p = null;
         WifiService wifi = null;
+        EthernetService ethernet = null;	/*  EthernetService (add by shugeLinux@gmail.com)  */
         NsdService serviceDiscovery= null;
         IPackageManager pm = null;
         Context context = null;
@@ -501,6 +503,17 @@ class ServerThread {
                 } catch (Throwable e) {
                     reportWtf("starting Wi-Fi P2pService", e);
                 }
+
+		/* Begin (add by shugeLinux@gmail.com) */
+           	try {
+                     Slog.i(TAG, "Ethernet Service");
+                     ethernet = new EthernetService(context);
+                     ServiceManager.addService(Context.ETHERNET_SERVICE, ethernet);
+            	} catch (Throwable e) {
+                     reportWtf("starting Ethernet Service", e);
+            	}
+		/* End (add by shugeLinux@gmail.com) */
+
 
                try {
                     Slog.i(TAG, "Wi-Fi Service");

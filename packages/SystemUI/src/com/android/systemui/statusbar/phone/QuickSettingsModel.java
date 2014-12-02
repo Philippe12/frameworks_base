@@ -81,6 +81,10 @@ class QuickSettingsModel implements BluetoothStateChangeCallback,
         int dataTypeIconId;
         String dataContentDescription;
     }
+    static class EthernetState extends State {
+        String stateContentDescription; //enabled, disabled, connected, disconnected
+        boolean connected;
+    }
     static class WifiState extends ActivityState {
         String signalContentDescription;
         boolean connected;
@@ -250,6 +254,11 @@ class QuickSettingsModel implements BluetoothStateChangeCallback,
     private QuickSettingsTileView mAirplaneModeTile;
     private RefreshCallback mAirplaneModeCallback;
     private State mAirplaneModeState = new State();
+    
+	//ethernet tile
+    private QuickSettingsTileView mEthernetTile;
+    private RefreshCallback mEthernetCallback;
+    private State mEthernetState = new EthernetState();
 
     private QuickSettingsTileView mWifiTile;
     private RefreshCallback mWifiCallback;
@@ -442,6 +451,34 @@ class QuickSettingsModel implements BluetoothStateChangeCallback,
                 R.drawable.ic_qs_airplane_off);
         mAirplaneModeState.label = r.getString(R.string.quick_settings_airplane_mode_label);
         mAirplaneModeCallback.refreshView(mAirplaneModeTile, mAirplaneModeState);
+    }
+
+    // Ethernet
+    void addEthernetTile(QuickSettingsTileView view, RefreshCallback cb) {
+        mEthernetTile = view;
+        mEthernetCallback = cb;
+        mEthernetCallback.refreshView(mEthernetTile, mEthernetState);
+    }
+
+    @Override
+    public void onEthernetStateChanged(boolean enabled, int ethernetIconId) {
+		Resources r = mContext.getResources();
+        //ethernetIconId from NetworkController equals 0 when ethernet disconnected 
+        //consider ethernet connected if ethernet isn't disabled & is really connected to network
+        boolean ethernetConnected = enabled && ethernetIconId > 0;
+        mEthernetState.enabled = enabled;
+	    
+        if(ethernetConnected) {	
+            mEthernetState.label = r.getString(R.string.quick_settings_ethernet_connected);
+        } else {            
+            if(enabled) {
+				mEthernetState.label = r.getString(R.string.quick_settings_ethernet_not_connected);
+            } else {
+				mEthernetState.label = r.getString(R.string.quick_settings_ethernet_off_label);
+			}
+        }
+        mEthernetState.iconId = ethernetConnected ? R.drawable.ic_qs_ethernet_connected : R.drawable.ic_qs_ethernet_disconnected;
+        mEthernetCallback.refreshView(mEthernetTile, mEthernetState);        
     }
 
     // Wifi

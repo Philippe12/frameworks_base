@@ -69,6 +69,7 @@ import com.android.systemui.statusbar.phone.QuickSettingsModel.RSSIState;
 import com.android.systemui.statusbar.phone.QuickSettingsModel.State;
 import com.android.systemui.statusbar.phone.QuickSettingsModel.UserState;
 import com.android.systemui.statusbar.phone.QuickSettingsModel.WifiState;
+import com.android.systemui.statusbar.phone.QuickSettingsModel.EthernetState;
 import com.android.systemui.statusbar.policy.BatteryController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.LocationController;
@@ -377,6 +378,32 @@ class QuickSettings {
     }
 
     private void addSystemTiles(ViewGroup parent, LayoutInflater inflater) {
+        //Ethernet
+        QuickSettingsTileView ethernetTile = (QuickSettingsTileView)
+                inflater.inflate(R.layout.quick_settings_tile, parent, false);
+        ethernetTile.setContent(R.layout.quick_settings_tile_ethernet, inflater);
+        //launch ethernet settings when clicking on tile
+        ethernetTile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSettingsActivity(android.provider.Settings.ACTION_ETHERNET_SETTINGS);
+            }
+        });
+        mModel.addEthernetTile(ethernetTile, new QuickSettingsModel.RefreshCallback() {
+            @Override
+            public void refreshView(QuickSettingsTileView view, State state) {
+                //Slog.d(TAG, "refreshView ethernet");
+                EthernetState ethernetState = (EthernetState) state;
+                TextView tv = (TextView) view.findViewById(R.id.ethernet_textview);
+                //for tests display disconnected ethernet icon
+                tv.setCompoundDrawablesWithIntrinsicBounds(0, ethernetState.iconId, 0, 0);
+                //for test display disconnected text, TODO needs to be changed depending on ethernetstate
+                view.setContentDescription("Ethernet disabled accessibility");
+                tv.setText(ethernetState.label);
+            }
+        });
+        parent.addView(ethernetTile);
+
         // Wi-fi
         final QuickSettingsTileView wifiTile = (QuickSettingsTileView)
                 inflater.inflate(R.layout.quick_settings_tile, parent, false);

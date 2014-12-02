@@ -206,6 +206,22 @@ public final class Settings {
             "android.settings.PRIVACY_SETTINGS";
 
     /**
+     * Activity Action: Show settings to allow configuration of ethernet.
+
+     * <p>
+     * In some cases, a matching Activity may not exist, so ensure you
+     * safeguard against this.
+     * <p>
+     * Input: Nothing.
+     * <p>
+     * Output: Nothing.
+
+     */
+    @SdkConstant(SdkConstantType.ACTIVITY_INTENT_ACTION)
+    public static final String ACTION_ETHERNET_SETTINGS =
+            "android.settings.ETHERNET_SETTINGS";
+
+    /**
      * Activity Action: Show settings to allow configuration of Wi-Fi.
 
      * <p>
@@ -1046,6 +1062,18 @@ public final class Settings {
             MOVED_TO_SECURE.add(Secure.WIFI_WATCHDOG_PING_COUNT);
             MOVED_TO_SECURE.add(Secure.WIFI_WATCHDOG_PING_DELAY_MS);
             MOVED_TO_SECURE.add(Secure.WIFI_WATCHDOG_PING_TIMEOUT_MS);
+
+	    //add ETHERNET to secure
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_ON);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_MODE);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_IP);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_MASK);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_DNS_PRIMARY);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_DNS_SECONDARY);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_ROUTE);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_CONF);
+	    MOVED_TO_SECURE.add(Secure.ETHERNET_IFNAME);
+
         }
 
         private static final HashSet<String> MOVED_TO_GLOBAL;
@@ -3882,6 +3910,18 @@ public final class Settings {
         @Deprecated
         public static final String WIFI_NUM_OPEN_NETWORKS_KEPT =
                 Global.WIFI_NUM_OPEN_NETWORKS_KEPT;
+        /**
+         * Ethernet related configurations
+         */
+        public static final String ETHERNET_ON      = "eth_on";
+        public static final String ETHERNET_MODE    = "eth_mode";
+        public static final String ETHERNET_IP      = "eth_ip";
+        public static final String ETHERNET_MASK    = "eth_netmask";
+        public static final String ETHERNET_DNS_PRIMARY     = "eth_dns_primary";
+        public static final String ETHERNET_DNS_SECONDARY     = "eth_dns_secondary";
+        public static final String ETHERNET_ROUTE   = "eth_route";
+        public static final String ETHERNET_CONF    = "eth_conf";
+        public static final String ETHERNET_IFNAME  = "eth_ifname";
 
         /**
          * @deprecated Use {@link android.provider.Settings.Global#WIFI_ON}

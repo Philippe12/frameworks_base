@@ -63,6 +63,8 @@ import android.location.LocationManager;
 import android.media.AudioManager;
 import android.media.MediaRouter;
 import android.net.ConnectivityManager;
+import android.net.ethernet.IEthernetManager;
+import android.net.ethernet.EthernetManager;
 import android.net.IConnectivityManager;
 import android.net.INetworkPolicyManager;
 import android.net.NetworkPolicyManager;
@@ -539,6 +541,13 @@ class ContextImpl extends Context {
                     IBinder b = ServiceManager.getService(WIFI_SERVICE);
                     IWifiManager service = IWifiManager.Stub.asInterface(b);
                     return new WifiManager(ctx.getOuterContext(), service);
+                }});
+
+        registerService(ETHERNET_SERVICE, new ServiceFetcher() {
+                public Object createService(ContextImpl ctx) {
+                    IBinder b = ServiceManager.getService(ETHERNET_SERVICE);
+                    IEthernetManager service = IEthernetManager.Stub.asInterface(b);
+                    return new EthernetManager(service, ctx.mMainThread.getHandler());
                 }});
 
         registerService(WIFI_P2P_SERVICE, new ServiceFetcher() {

@@ -482,6 +482,14 @@
     <string name="quick_settings_time_label">Time</string>
     <!-- QuickSettings: User [CHAR LIMIT=NONE] -->
     <string name="quick_settings_user_label">Me</string>
+    <!-- QuickSettings: Ethernet [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_ethernet_label">Ethernet</string>
+    <!-- QuickSettings: Ethernet (Connected) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_ethernet_connected">Connected</string>
+    <!-- QuickSettings: Ethernet (Not connected) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_ethernet_not_connected">Disconnected</string>
+    <!-- QuickSettings: Ethernet (Off) [CHAR LIMIT=NONE] -->
+    <string name="quick_settings_ethernet_off_label">Ethernet Off</string>
     <!-- QuickSettings: Wifi [CHAR LIMIT=NONE] -->
     <string name="quick_settings_wifi_label">Wi-Fi</string>
     <!-- QuickSettings: Wifi (Not connected) [CHAR LIMIT=NONE] -->

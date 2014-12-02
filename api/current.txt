@@ -3489,6 +3489,7 @@ package android.app {
     method public deprecated android.app.DownloadManager.Request setShowRunningNotification(boolean);
     method public android.app.DownloadManager.Request setTitle(java.lang.CharSequence);
     method public android.app.DownloadManager.Request setVisibleInDownloadsUi(boolean);
+    field public static final int NETWORK_ETHERNET = 4; // 0x4
     field public static final int NETWORK_MOBILE = 1; // 0x1
     field public static final int NETWORK_WIFI = 2; // 0x2
     field public static final int VISIBILITY_HIDDEN = 2; // 0x2
@@ -5987,6 +5988,7 @@ package android.content {
     field public static final java.lang.String DISPLAY_SERVICE = "display";
     field public static final java.lang.String DOWNLOAD_SERVICE = "download";
     field public static final java.lang.String DROPBOX_SERVICE = "dropbox";
+    field public static final java.lang.String ETHERNET_SERVICE = "ethernet";
     field public static final java.lang.String INPUT_METHOD_SERVICE = "input_method";
     field public static final java.lang.String INPUT_SERVICE = "input";
     field public static final java.lang.String KEYGUARD_SERVICE = "keyguard";
@@ -14081,6 +14083,32 @@ package android.net {
 
 }
 
+package android.net.ethernet {
+
+  public class EthernetDevInfo implements android.os.Parcelable {
+    ctor public EthernetDevInfo();
+    method public int describeContents();
+    method public int getConnectMode();
+    method public java.lang.String[] getDnsAddr();
+    method public java.lang.String getGateWay();
+    method public java.lang.String getHwaddr();
+    method public java.lang.String getIfName();
+    method public java.lang.String getIpAddress();
+    method public java.lang.String getNetMask();
+    method public void setConnectMode(int);
+    method public void setDnsAddr(java.lang.String,java.lang.String);
+    method public void setGateWay(java.lang.String);
+    method public void setHwaddr(java.lang.String);
+    method public void setIfName(java.lang.String);
+    method public void setIpAddress(java.lang.String);
+    method public void setNetMask(java.lang.String);
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final int ETHERNET_CONN_MODE_DHCP = 1; // 0x1
+    field public static final int ETHERNET_CONN_MODE_MANUAL = 0; // 0x0
+  }
+
+}
+
 package android.net.http {
 
   public final class AndroidHttpClient implements org.apache.http.client.HttpClient {
@@ -21020,6 +21048,7 @@ package android.provider {
     field public static final java.lang.String ACTION_DEVICE_INFO_SETTINGS = "android.settings.DEVICE_INFO_SETTINGS";
     field public static final java.lang.String ACTION_DISPLAY_SETTINGS = "android.settings.DISPLAY_SETTINGS";
     field public static final java.lang.String ACTION_DREAM_SETTINGS = "android.settings.DREAM_SETTINGS";
+    field public static final java.lang.String ACTION_ETHERNET_SETTINGS = "android.settings.ETHERNET_SETTINGS";
     field public static final java.lang.String ACTION_INPUT_METHOD_SETTINGS = "android.settings.INPUT_METHOD_SETTINGS";
     field public static final java.lang.String ACTION_INPUT_METHOD_SUBTYPE_SETTINGS = "android.settings.INPUT_METHOD_SUBTYPE_SETTINGS";
     field public static final java.lang.String ACTION_INTERNAL_STORAGE_SETTINGS = "android.settings.INTERNAL_STORAGE_SETTINGS";
@@ -21145,6 +21174,15 @@ package android.provider {
     field public static final deprecated java.lang.String DEVICE_PROVISIONED = "device_provisioned";
     field public static final java.lang.String ENABLED_ACCESSIBILITY_SERVICES = "enabled_accessibility_services";
     field public static final java.lang.String ENABLED_INPUT_METHODS = "enabled_input_methods";
+    field public static final java.lang.String ETHERNET_CONF = "eth_conf";
+    field public static final java.lang.String ETHERNET_DNS_PRIMARY = "eth_dns_primary";
+    field public static final java.lang.String ETHERNET_DNS_SECONDARY = "eth_dns_secondary";
+    field public static final java.lang.String ETHERNET_IFNAME = "eth_ifname";
+    field public static final java.lang.String ETHERNET_IP = "eth_ip";
+    field public static final java.lang.String ETHERNET_MASK = "eth_netmask";
+    field public static final java.lang.String ETHERNET_MODE = "eth_mode";
+    field public static final java.lang.String ETHERNET_ON = "eth_on";
+    field public static final java.lang.String ETHERNET_ROUTE = "eth_route";
     field public static final deprecated java.lang.String HTTP_PROXY = "http_proxy";
     field public static final java.lang.String INPUT_METHOD_SELECTOR_VISIBILITY = "input_method_selector_visibility";
     field public static final deprecated java.lang.String INSTALL_NON_MARKET_APPS = "install_non_market_apps";
